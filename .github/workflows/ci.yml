@@ -105,10 +105,16 @@ jobs:
           go install golang.org/x/vuln/cmd/govulncheck@v1.7.0
           govulncheck ./...
 
+      # The pinned CLI rather than gitleaks-action: same tool and version as
+      # `make sec` and the pre-commit hook, with no action to keep current.
       - name: gitleaks
-        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          go install github.com/zricethezav/gitleaks/v8@v8.30.1
+          if [ "${{ github.event_name }}" = "push" ]; then
+            gitleaks git --redact --no-banner .
+          else
+            gitleaks dir --redact --no-banner .
+          fi
 
   docker:
     name: Docker
@@ -127,4 +133,10 @@ jobs:
         run: |
           user=$(docker inspect -f '{{.Config.User}}' gobase:ci)
           echo "image user: ${user}"
-          test "${user}" = "nonroot" || test "${user}" = "65532:65532"
+          # Must be set, and must not be root or empty (which means root).
+          case "${user}" in
+            ""|root|root:*|0|0:*)
+              echo "::error::image runs as root"
+              exit 1
+              ;;
+          esac

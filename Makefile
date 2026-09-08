@@ -109,11 +109,6 @@ hooks: ## Install the git hooks
 .PHONY: ci
 ci: fmt lint vet layers test sec ## Everything CI runs, locally
 
-.PHONY: hardening
-hardening: ## Compile and test the optional hardening files
-	go vet -tags hardening ./docs/hardening/...
-	go test -tags hardening ./docs/hardening/...
-
 .PHONY: clean
 clean: ## Remove build artefacts
 	rm -rf $(BUILD_DIR) $(COVER_FILE)

@@ -34,7 +34,7 @@ func TestAccessLogCarriesTraceID(t *testing.T) {
 		d.Logger = logger
 	})
 
-	router.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/widgets", http.NoBody))
+	router.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/examples", http.NoBody))
 
 	var line map[string]any
 	dec := json.NewDecoder(bytes.NewReader(logs.Bytes()))

@@ -53,7 +53,7 @@ check "domain does not import adapters" \
   'github.com/selimslab/gobase/internal/adapters.*' ./internal/domain/...
 
 # The port inversion, stated as a dependency fact: the domain declares
-# WidgetRepo and memstore implements it, so the arrow points inward.
+# ExampleRepo and memstore implements it, so the arrow points inward.
 if go list -deps ./internal/adapters/memstore | grep -qx 'github.com/selimslab/gobase/internal/domain'; then
   echo "ok: memstore implements a port declared in the domain"
 else

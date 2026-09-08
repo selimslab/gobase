@@ -31,8 +31,11 @@ type OriginDecision struct {
 var deny = OriginDecision{}
 
 // OriginPolicy decides whether a cross-origin request is allowed. The default
-// policy denies everything; see docs/hardening/cors_allowlist.go for an
-// allowlist you can drop in.
+// policy denies everything. To allow an origin, assign Policy.AllowOrigin a
+// func that matches exact origins — never a suffix match, because a suffix
+// test on "example.com" also matches "evil-example.com" and
+// "example.com.evil.test". Every origin you allow is a site that can read
+// authenticated responses on a user's behalf.
 type OriginPolicy func(origin string) OriginDecision
 
 // DenyAllOrigins is the default OriginPolicy. It never allows an origin, so

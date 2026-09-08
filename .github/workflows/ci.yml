@@ -77,11 +77,6 @@ jobs:
       - name: Coverage summary
         run: go tool cover -func=coverage.out | tail -1
 
-      - name: Hardening options compile
-        run: |
-          go vet -tags hardening ./docs/hardening/...
-          go test -tags hardening ./docs/hardening/...
-
   sec:
     name: Security
     runs-on: ubuntu-latest

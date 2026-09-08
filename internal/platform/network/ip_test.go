@@ -1,9 +1,9 @@
-package security_test
+package network_test
 
 import (
 	"testing"
 
-	"github.com/selimslab/gobase/internal/platform/security"
+	"github.com/selimslab/gobase/internal/platform/network"
 )
 
 func TestClientIP(t *testing.T) {
@@ -115,7 +115,7 @@ func TestClientIP(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := security.ClientIP(tt.remoteAddr, tt.fwd, tt.trustedProxies)
+			got := network.ClientIP(tt.remoteAddr, tt.fwd, tt.trustedProxies)
 			if got != tt.want {
 				t.Errorf("ClientIP(%q, %v, %d) = %q, want %q",
 					tt.remoteAddr, tt.fwd, tt.trustedProxies, got, tt.want)

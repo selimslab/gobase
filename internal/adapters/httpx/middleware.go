@@ -9,6 +9,7 @@ import (
 	"runtime/debug"
 	"time"
 
+	"github.com/selimslab/gobase/internal/platform/network"
 	"github.com/selimslab/gobase/internal/platform/obs"
 	"github.com/selimslab/gobase/internal/platform/security"
 )
@@ -167,7 +168,7 @@ func levelForStatus(status int) slog.Level {
 
 // clientIP resolves the caller's address under the trusted-proxy policy.
 func clientIP(r *http.Request, policy security.Policy) string {
-	return security.ClientIP(r.RemoteAddr, r.Header.Values("X-Forwarded-For"), policy.TrustedProxies)
+	return network.ClientIP(r.RemoteAddr, r.Header.Values("X-Forwarded-For"), policy.TrustedProxies)
 }
 
 // statusRecorder remembers what the handler wrote, so the access log can

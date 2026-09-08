@@ -40,7 +40,7 @@ func TestNewLoggerEmitsJSONWithServiceIdentity(t *testing.T) {
 
 	var buf bytes.Buffer
 
-	logger := obs.NewLogger(&buf, config.Observability{LogLevel: "info"}, "widgets", "v1.2.3")
+	logger := obs.NewLogger(&buf, config.Observability{LogLevel: "info"}, "billing", "v1.2.3")
 	logger.Info("hello")
 
 	var line map[string]any
@@ -48,8 +48,8 @@ func TestNewLoggerEmitsJSONWithServiceIdentity(t *testing.T) {
 		t.Fatalf("log line is not JSON: %v (%s)", err, buf.String())
 	}
 
-	if line["service"] != "widgets" {
-		t.Errorf("service = %v, want widgets", line["service"])
+	if line["service"] != "billing" {
+		t.Errorf("service = %v, want billing", line["service"])
 	}
 
 	if line["version"] != "v1.2.3" {
@@ -62,7 +62,7 @@ func TestNewLoggerHonoursLevel(t *testing.T) {
 
 	var buf bytes.Buffer
 
-	logger := obs.NewLogger(&buf, config.Observability{LogLevel: "warn"}, "widgets", "v1")
+	logger := obs.NewLogger(&buf, config.Observability{LogLevel: "warn"}, "billing", "v1")
 	logger.Info("dropped")
 	logger.Warn("kept")
 
@@ -165,7 +165,7 @@ func TestInitOTelWithoutEndpointIsANoop(t *testing.T) {
 
 	ctx := context.Background()
 
-	shutdown, err := obs.InitOTel(ctx, config.Observability{SampleRatio: 1}, "widgets", "v1", "test")
+	shutdown, err := obs.InitOTel(ctx, config.Observability{SampleRatio: 1}, "billing", "v1", "test")
 	if err != nil {
 		t.Fatalf("InitOTel() error = %v", err)
 	}

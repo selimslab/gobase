@@ -1,4 +1,7 @@
-package security
+// Package network holds transport-independent address handling: resolving the
+// caller's IP from a connection peer and a forwarding chain. Nothing here
+// imports net/http, so it is testable without a server.
+package network
 
 import (
 	"net"

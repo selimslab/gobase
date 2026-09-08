@@ -33,23 +33,23 @@ func testSecurityConfig() config.Security {
 func newTestRouter(t *testing.T, env config.Environment, mutate func(*httpx.Deps)) http.Handler {
 	t.Helper()
 
-	repo := memstore.NewWidgetRepo()
+	repo := memstore.NewExampleRepo()
 
-	svc, err := domain.NewWidgetService(repo, memstore.NewIDGenerator(), nil)
+	svc, err := domain.NewExampleService(repo, memstore.NewIDGenerator(), nil)
 	if err != nil {
-		t.Fatalf("NewWidgetService() error = %v", err)
+		t.Fatalf("NewExampleService() error = %v", err)
 	}
 
 	ready := httpx.NewReadiness()
 	ready.SetReady(true)
 
 	deps := httpx.Deps{
-		Logger:  discardLogger(),
-		Policy:  security.NewPolicy(env, testSecurityConfig()),
-		Widgets: svc,
-		Ready:   ready,
-		Version: "test",
-		Service: "gobase-test",
+		Logger:   discardLogger(),
+		Policy:   security.NewPolicy(env, testSecurityConfig()),
+		Examples: svc,
+		Ready:    ready,
+		Version:  "test",
+		Service:  "gobase-test",
 	}
 
 	if mutate != nil {

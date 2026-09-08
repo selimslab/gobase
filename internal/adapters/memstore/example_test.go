@@ -14,13 +14,13 @@ import (
 
 // The point of the example slice: the adapter satisfies the port the domain
 // declared, and the domain knows nothing about this package.
-func TestWidgetRepoSatisfiesPort(t *testing.T) {
+func TestExampleRepoSatisfiesPort(t *testing.T) {
 	t.Parallel()
 
 	// These assignments are the assertion: they do not compile unless the
 	// adapter satisfies the port the domain declared.
 	var (
-		repo domain.WidgetRepo  = memstore.NewWidgetRepo()
+		repo domain.ExampleRepo = memstore.NewExampleRepo()
 		ids  domain.IDGenerator = memstore.NewIDGenerator()
 	)
 
@@ -33,12 +33,12 @@ func TestWidgetRepoSatisfiesPort(t *testing.T) {
 	}
 }
 
-func mustWidget(t *testing.T, id, name string, qty int, at time.Time) domain.Widget {
+func mustExample(t *testing.T, id, name string, qty int, at time.Time) domain.Example {
 	t.Helper()
 
-	w, err := domain.NewWidget(id, name, qty, at)
+	w, err := domain.NewExample(id, name, qty, at)
 	if err != nil {
-		t.Fatalf("NewWidget(%q) error = %v", id, err)
+		t.Fatalf("NewExample(%q) error = %v", id, err)
 	}
 
 	return w
@@ -48,8 +48,8 @@ func TestCreateAndGet(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	repo := memstore.NewWidgetRepo()
-	want := mustWidget(t, "w1", "bolt", 3, time.Unix(1, 0))
+	repo := memstore.NewExampleRepo()
+	want := mustExample(t, "w1", "bolt", 3, time.Unix(1, 0))
 
 	if err := repo.Create(ctx, want); err != nil {
 		t.Fatalf("Create() error = %v", err)
@@ -69,8 +69,8 @@ func TestCreateDuplicate(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	repo := memstore.NewWidgetRepo()
-	w := mustWidget(t, "w1", "bolt", 3, time.Unix(1, 0))
+	repo := memstore.NewExampleRepo()
+	w := mustExample(t, "w1", "bolt", 3, time.Unix(1, 0))
 
 	if err := repo.Create(ctx, w); err != nil {
 		t.Fatalf("Create() error = %v", err)
@@ -85,8 +85,8 @@ func TestGetUpdateDeleteMissing(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	repo := memstore.NewWidgetRepo()
-	w := mustWidget(t, "ghost", "bolt", 1, time.Unix(1, 0))
+	repo := memstore.NewExampleRepo()
+	w := mustExample(t, "ghost", "bolt", 1, time.Unix(1, 0))
 
 	if _, err := repo.Get(ctx, "ghost"); !errors.Is(err, domain.ErrNotFound) {
 		t.Errorf("Get error = %v, want ErrNotFound", err)
@@ -105,13 +105,13 @@ func TestListIsOrderedByCreation(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	repo := memstore.NewWidgetRepo()
+	repo := memstore.NewExampleRepo()
 
 	// Inserted out of order on purpose.
-	for _, w := range []domain.Widget{
-		mustWidget(t, "c", "third", 1, time.Unix(300, 0)),
-		mustWidget(t, "a", "first", 1, time.Unix(100, 0)),
-		mustWidget(t, "b", "second", 1, time.Unix(200, 0)),
+	for _, w := range []domain.Example{
+		mustExample(t, "c", "third", 1, time.Unix(300, 0)),
+		mustExample(t, "a", "first", 1, time.Unix(100, 0)),
+		mustExample(t, "b", "second", 1, time.Unix(200, 0)),
 	} {
 		if err := repo.Create(ctx, w); err != nil {
 			t.Fatalf("Create() error = %v", err)
@@ -125,7 +125,7 @@ func TestListIsOrderedByCreation(t *testing.T) {
 
 	want := []string{"a", "b", "c"}
 	if len(got) != len(want) {
-		t.Fatalf("List() returned %d widgets, want %d", len(got), len(want))
+		t.Fatalf("List() returned %d examples, want %d", len(got), len(want))
 	}
 
 	for i, id := range want {
@@ -139,11 +139,11 @@ func TestListTieBreaksOnID(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	repo := memstore.NewWidgetRepo()
+	repo := memstore.NewExampleRepo()
 	at := time.Unix(100, 0)
 
 	for _, id := range []string{"z", "m", "a"} {
-		if err := repo.Create(ctx, mustWidget(t, id, "same-time", 1, at)); err != nil {
+		if err := repo.Create(ctx, mustExample(t, id, "same-time", 1, at)); err != nil {
 			t.Fatalf("Create() error = %v", err)
 		}
 	}
@@ -165,8 +165,8 @@ func TestUpdateReplaces(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	repo := memstore.NewWidgetRepo()
-	w := mustWidget(t, "w1", "bolt", 1, time.Unix(1, 0))
+	repo := memstore.NewExampleRepo()
+	w := mustExample(t, "w1", "bolt", 1, time.Unix(1, 0))
 
 	if err := repo.Create(ctx, w); err != nil {
 		t.Fatalf("Create() error = %v", err)
@@ -192,7 +192,7 @@ func TestConcurrentAccess(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	repo := memstore.NewWidgetRepo()
+	repo := memstore.NewExampleRepo()
 
 	const n = 50
 
@@ -206,7 +206,7 @@ func TestConcurrentAccess(t *testing.T) {
 
 			id := fmt.Sprintf("w%02d", i)
 
-			if err := repo.Create(ctx, mustWidgetNoT(id, time.Unix(int64(i), 0))); err != nil {
+			if err := repo.Create(ctx, mustExampleNoT(id, time.Unix(int64(i), 0))); err != nil {
 				t.Errorf("Create(%s) error = %v", id, err)
 
 				return
@@ -230,14 +230,14 @@ func TestConcurrentAccess(t *testing.T) {
 	}
 
 	if len(got) != n {
-		t.Errorf("List() returned %d widgets, want %d", len(got), n)
+		t.Errorf("List() returned %d examples, want %d", len(got), n)
 	}
 }
 
-// mustWidgetNoT builds a widget off the test goroutine, where t.Fatalf is
+// mustExampleNoT builds a example off the test goroutine, where t.Fatalf is
 // illegal.
-func mustWidgetNoT(id string, at time.Time) domain.Widget {
-	return domain.Widget{ID: id, Name: "bolt", Quantity: 1, CreatedAt: at.UTC()}
+func mustExampleNoT(id string, at time.Time) domain.Example {
+	return domain.Example{ID: id, Name: "bolt", Quantity: 1, CreatedAt: at.UTC()}
 }
 
 func TestNewIDGeneratorIsUnique(t *testing.T) {

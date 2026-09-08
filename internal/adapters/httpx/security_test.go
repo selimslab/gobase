@@ -10,6 +10,7 @@ import (
 
 	"github.com/selimslab/gobase/internal/adapters/httpx"
 	"github.com/selimslab/gobase/internal/platform/config"
+	"github.com/selimslab/gobase/internal/platform/network"
 	"github.com/selimslab/gobase/internal/platform/security"
 )
 
@@ -174,7 +175,7 @@ func TestOversizedBodyIsRejected(t *testing.T) {
 
 	body := `{"name":"` + strings.Repeat("x", 512) + `","quantity":1}`
 
-	req := httptest.NewRequest(http.MethodPost, "/widgets", strings.NewReader(body))
+	req := httptest.NewRequest(http.MethodPost, "/examples", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 
 	rec := httptest.NewRecorder()
@@ -194,7 +195,7 @@ func TestBodyWithinLimitIsAccepted(t *testing.T) {
 
 	router := newTestRouter(t, config.EnvDevelopment, nil)
 
-	req := httptest.NewRequest(http.MethodPost, "/widgets", strings.NewReader(`{"name":"bolt","quantity":2}`))
+	req := httptest.NewRequest(http.MethodPost, "/examples", strings.NewReader(`{"name":"bolt","quantity":2}`))
 	req.Header.Set("Content-Type", "application/json")
 
 	rec := httptest.NewRecorder()
@@ -204,8 +205,8 @@ func TestBodyWithinLimitIsAccepted(t *testing.T) {
 		t.Fatalf("status = %d, want 201: %s", rec.Code, rec.Body.String())
 	}
 
-	if loc := rec.Header().Get("Location"); !strings.HasPrefix(loc, "/widgets/") {
-		t.Errorf("Location = %q, want a widget URL", loc)
+	if loc := rec.Header().Get("Location"); !strings.HasPrefix(loc, "/examples/") {
+		t.Errorf("Location = %q, want a example URL", loc)
 	}
 }
 
@@ -220,7 +221,7 @@ func TestForwardedForIgnoredWithoutTrustedProxy(t *testing.T) {
 		t.Fatalf("TrustedProxies = %d, want 0 by default", policy.TrustedProxies)
 	}
 
-	got := security.ClientIP("10.0.0.9:1234", []string{"1.2.3.4"}, policy.TrustedProxies)
+	got := network.ClientIP("10.0.0.9:1234", []string{"1.2.3.4"}, policy.TrustedProxies)
 	if got != "10.0.0.9" {
 		t.Errorf("ClientIP = %q, want the connection peer", got)
 	}
@@ -231,7 +232,7 @@ func TestUnknownJSONFieldIsRejected(t *testing.T) {
 
 	router := newTestRouter(t, config.EnvDevelopment, nil)
 
-	req := httptest.NewRequest(http.MethodPost, "/widgets",
+	req := httptest.NewRequest(http.MethodPost, "/examples",
 		strings.NewReader(`{"name":"bolt","quantity":1,"is_admin":true}`))
 	req.Header.Set("Content-Type", "application/json")
 
@@ -248,7 +249,7 @@ func TestWrongContentTypeIsRejected(t *testing.T) {
 
 	router := newTestRouter(t, config.EnvDevelopment, nil)
 
-	req := httptest.NewRequest(http.MethodPost, "/widgets", strings.NewReader(`{"name":"bolt"}`))
+	req := httptest.NewRequest(http.MethodPost, "/examples", strings.NewReader(`{"name":"bolt"}`))
 	req.Header.Set("Content-Type", "text/plain")
 
 	rec := httptest.NewRecorder()
@@ -264,7 +265,7 @@ func TestDomainValidationBecomes422(t *testing.T) {
 
 	router := newTestRouter(t, config.EnvDevelopment, nil)
 
-	req := httptest.NewRequest(http.MethodPost, "/widgets", strings.NewReader(`{"name":"","quantity":-5}`))
+	req := httptest.NewRequest(http.MethodPost, "/examples", strings.NewReader(`{"name":"","quantity":-5}`))
 	req.Header.Set("Content-Type", "application/json")
 
 	rec := httptest.NewRecorder()
@@ -287,13 +288,13 @@ func TestDomainValidationBecomes422(t *testing.T) {
 	}
 }
 
-func TestMissingWidgetBecomes404Problem(t *testing.T) {
+func TestMissingExampleBecomes404Problem(t *testing.T) {
 	t.Parallel()
 
 	router := newTestRouter(t, config.EnvDevelopment, nil)
 
 	rec := httptest.NewRecorder()
-	router.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/widgets/nope", http.NoBody))
+	router.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/examples/nope", http.NoBody))
 
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("status = %d, want 404", rec.Code)
@@ -301,17 +302,17 @@ func TestMissingWidgetBecomes404Problem(t *testing.T) {
 
 	// The internal error text names the ID; the client response must not
 	// echo storage internals back.
-	if strings.Contains(rec.Body.String(), "widget \"nope\"") {
+	if strings.Contains(rec.Body.String(), "example \"nope\"") {
 		t.Errorf("internal error text leaked: %s", rec.Body.String())
 	}
 }
 
-func TestWidgetLifecycle(t *testing.T) {
+func TestExampleLifecycle(t *testing.T) {
 	t.Parallel()
 
 	router := newTestRouter(t, config.EnvDevelopment, nil)
 
-	create := httptest.NewRequest(http.MethodPost, "/widgets", strings.NewReader(`{"name":"bolt","quantity":1}`))
+	create := httptest.NewRequest(http.MethodPost, "/examples", strings.NewReader(`{"name":"bolt","quantity":1}`))
 	create.Header.Set("Content-Type", "application/json")
 
 	rec := httptest.NewRecorder()
@@ -327,10 +328,10 @@ func TestWidgetLifecycle(t *testing.T) {
 	}
 
 	if err := json.Unmarshal(rec.Body.Bytes(), &created); err != nil {
-		t.Fatalf("decode created widget: %v", err)
+		t.Fatalf("decode created example: %v", err)
 	}
 
-	restock := httptest.NewRequest(http.MethodPost, "/widgets/"+created.ID+"/restock",
+	restock := httptest.NewRequest(http.MethodPost, "/examples/"+created.ID+"/restock",
 		strings.NewReader(`{"quantity":4}`))
 	restock.Header.Set("Content-Type", "application/json")
 
@@ -346,7 +347,7 @@ func TestWidgetLifecycle(t *testing.T) {
 	}
 
 	if err := json.Unmarshal(rec.Body.Bytes(), &restocked); err != nil {
-		t.Fatalf("decode restocked widget: %v", err)
+		t.Fatalf("decode restocked example: %v", err)
 	}
 
 	if restocked.Quantity != 5 {
@@ -354,14 +355,14 @@ func TestWidgetLifecycle(t *testing.T) {
 	}
 
 	rec = httptest.NewRecorder()
-	router.ServeHTTP(rec, httptest.NewRequest(http.MethodDelete, "/widgets/"+created.ID, http.NoBody))
+	router.ServeHTTP(rec, httptest.NewRequest(http.MethodDelete, "/examples/"+created.ID, http.NoBody))
 
 	if rec.Code != http.StatusNoContent {
 		t.Errorf("delete status = %d, want 204", rec.Code)
 	}
 
 	rec = httptest.NewRecorder()
-	router.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/widgets/"+created.ID, http.NoBody))
+	router.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/examples/"+created.ID, http.NoBody))
 
 	if rec.Code != http.StatusNotFound {
 		t.Errorf("get after delete status = %d, want 404", rec.Code)

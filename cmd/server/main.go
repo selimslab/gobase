@@ -55,20 +55,20 @@ func run(ctx context.Context) error {
 
 	policy := security.NewPolicy(cfg.Env, cfg.Security)
 
-	repo := memstore.NewWidgetRepo()
+	repo := memstore.NewExampleRepo()
 
-	widgets, err := domain.NewWidgetService(repo, memstore.NewIDGenerator(), nil)
+	examples, err := domain.NewExampleService(repo, memstore.NewIDGenerator(), nil)
 	if err != nil {
-		return fmt.Errorf("init widget service: %w", err)
+		return fmt.Errorf("init example service: %w", err)
 	}
 
 	srv := httpx.NewServer(cfg.HTTP, httpx.Deps{
-		Logger:  logger,
-		Policy:  policy,
-		Widgets: widgets,
-		Ready:   httpx.NewReadiness(),
-		Version: v,
-		Service: cfg.ServiceName,
+		Logger:   logger,
+		Policy:   policy,
+		Examples: examples,
+		Ready:    httpx.NewReadiness(),
+		Version:  v,
+		Service:  cfg.ServiceName,
 	})
 
 	runErr := srv.Run(ctx)

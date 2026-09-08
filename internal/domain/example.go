@@ -23,15 +23,15 @@ var (
 	ErrInvalid = errors.New("invalid")
 )
 
-// Widget is the example entity. Delete it and put your own here.
-type Widget struct {
+// Example is the sample entity. Delete it and put your own here.
+type Example struct {
 	ID        string
 	Name      string
 	Quantity  int
 	CreatedAt time.Time
 }
 
-// Widget rules, stated once so both the service and the store obey the same
+// Example rules, stated once so both the service and the store obey the same
 // limits.
 const (
 	nameMinLen  = 1
@@ -39,9 +39,9 @@ const (
 	maxQuantity = 1_000_000
 )
 
-// NewWidget builds a valid Widget or explains why it cannot.
-func NewWidget(id, name string, quantity int, now time.Time) (Widget, error) {
-	w := Widget{
+// NewExample builds a valid Example or explains why it cannot.
+func NewExample(id, name string, quantity int, now time.Time) (Example, error) {
+	w := Example{
 		ID:        strings.TrimSpace(id),
 		Name:      strings.TrimSpace(name),
 		Quantity:  quantity,
@@ -49,14 +49,14 @@ func NewWidget(id, name string, quantity int, now time.Time) (Widget, error) {
 	}
 
 	if err := w.Validate(); err != nil {
-		return Widget{}, err
+		return Example{}, err
 	}
 
 	return w, nil
 }
 
-// Validate reports every rule the Widget breaks, joined into one error.
-func (w Widget) Validate() error {
+// Validate reports every rule the Example breaks, joined into one error.
+func (w Example) Validate() error {
 	var errs []error
 
 	if w.ID == "" {
@@ -75,16 +75,16 @@ func (w Widget) Validate() error {
 }
 
 // Restock increases the quantity, refusing a change that breaks the rules.
-func (w Widget) Restock(by int) (Widget, error) {
+func (w Example) Restock(by int) (Example, error) {
 	if by <= 0 {
-		return Widget{}, fmt.Errorf("%w: restock amount must be positive", ErrInvalid)
+		return Example{}, fmt.Errorf("%w: restock amount must be positive", ErrInvalid)
 	}
 
 	next := w
 	next.Quantity += by
 
 	if err := next.Validate(); err != nil {
-		return Widget{}, err
+		return Example{}, err
 	}
 
 	return next, nil

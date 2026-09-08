@@ -7,10 +7,10 @@ import (
 	"time"
 )
 
-// WidgetService applies the widget rules. It depends on ports only, so it can
+// ExampleService applies the example rules. It depends on ports only, so it can
 // be exercised with no HTTP server and no store.
-type WidgetService struct {
-	repo  WidgetRepo
+type ExampleService struct {
+	repo  ExampleRepo
 	ids   IDGenerator
 	clock Clock
 }
@@ -21,11 +21,11 @@ type systemClock struct{}
 // Now implements Clock.
 func (systemClock) Now() time.Time { return time.Now() }
 
-// NewWidgetService binds a service to its ports. A nil clock falls back to the
+// NewExampleService binds a service to its ports. A nil clock falls back to the
 // wall clock; ids is required, since identity must be explicit.
-func NewWidgetService(repo WidgetRepo, ids IDGenerator, clock Clock) (*WidgetService, error) {
+func NewExampleService(repo ExampleRepo, ids IDGenerator, clock Clock) (*ExampleService, error) {
 	if repo == nil {
-		return nil, errors.New("domain: widget repo must not be nil")
+		return nil, errors.New("domain: example repo must not be nil")
 	}
 
 	if ids == nil {
@@ -36,74 +36,74 @@ func NewWidgetService(repo WidgetRepo, ids IDGenerator, clock Clock) (*WidgetSer
 		clock = systemClock{}
 	}
 
-	return &WidgetService{repo: repo, ids: ids, clock: clock}, nil
+	return &ExampleService{repo: repo, ids: ids, clock: clock}, nil
 }
 
-// Create validates the input, assigns an identity, and stores the widget.
-func (s *WidgetService) Create(ctx context.Context, name string, quantity int) (Widget, error) {
-	w, err := NewWidget(s.ids.NewID(), name, quantity, s.clock.Now())
+// Create validates the input, assigns an identity, and stores the example.
+func (s *ExampleService) Create(ctx context.Context, name string, quantity int) (Example, error) {
+	w, err := NewExample(s.ids.NewID(), name, quantity, s.clock.Now())
 	if err != nil {
-		return Widget{}, err
+		return Example{}, err
 	}
 
 	if err := s.repo.Create(ctx, w); err != nil {
-		return Widget{}, fmt.Errorf("create widget: %w", err)
+		return Example{}, fmt.Errorf("create example: %w", err)
 	}
 
 	return w, nil
 }
 
-// Get returns one widget by ID.
-func (s *WidgetService) Get(ctx context.Context, id string) (Widget, error) {
+// Get returns one example by ID.
+func (s *ExampleService) Get(ctx context.Context, id string) (Example, error) {
 	if id == "" {
-		return Widget{}, fmt.Errorf("%w: id must not be empty", ErrInvalid)
+		return Example{}, fmt.Errorf("%w: id must not be empty", ErrInvalid)
 	}
 
 	w, err := s.repo.Get(ctx, id)
 	if err != nil {
-		return Widget{}, fmt.Errorf("get widget: %w", err)
+		return Example{}, fmt.Errorf("get example: %w", err)
 	}
 
 	return w, nil
 }
 
-// List returns every widget.
-func (s *WidgetService) List(ctx context.Context) ([]Widget, error) {
-	widgets, err := s.repo.List(ctx)
+// List returns every example.
+func (s *ExampleService) List(ctx context.Context) ([]Example, error) {
+	examples, err := s.repo.List(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("list widgets: %w", err)
+		return nil, fmt.Errorf("list examples: %w", err)
 	}
 
-	return widgets, nil
+	return examples, nil
 }
 
-// Restock adds to a widget's quantity, enforcing the entity rules.
-func (s *WidgetService) Restock(ctx context.Context, id string, by int) (Widget, error) {
+// Restock adds to a example's quantity, enforcing the entity rules.
+func (s *ExampleService) Restock(ctx context.Context, id string, by int) (Example, error) {
 	w, err := s.Get(ctx, id)
 	if err != nil {
-		return Widget{}, err
+		return Example{}, err
 	}
 
 	next, err := w.Restock(by)
 	if err != nil {
-		return Widget{}, err
+		return Example{}, err
 	}
 
 	if err := s.repo.Update(ctx, next); err != nil {
-		return Widget{}, fmt.Errorf("update widget: %w", err)
+		return Example{}, fmt.Errorf("update example: %w", err)
 	}
 
 	return next, nil
 }
 
-// Delete removes a widget.
-func (s *WidgetService) Delete(ctx context.Context, id string) error {
+// Delete removes a example.
+func (s *ExampleService) Delete(ctx context.Context, id string) error {
 	if id == "" {
 		return fmt.Errorf("%w: id must not be empty", ErrInvalid)
 	}
 
 	if err := s.repo.Delete(ctx, id); err != nil {
-		return fmt.Errorf("delete widget: %w", err)
+		return fmt.Errorf("delete example: %w", err)
 	}
 
 	return nil

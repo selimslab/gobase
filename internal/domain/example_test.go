@@ -9,73 +9,73 @@ import (
 	"github.com/selimslab/gobase/internal/domain"
 )
 
-// stubRepo is a hand-written stand-in for the WidgetRepo port. The domain can
+// stubRepo is a hand-written stand-in for the ExampleRepo port. The domain can
 // be tested with no store and no server, which is the point of the port.
 type stubRepo struct {
-	widgets map[string]domain.Widget
-	err     error
-	creates int
-	updates int
+	examples map[string]domain.Example
+	err      error
+	creates  int
+	updates  int
 }
 
 func newStubRepo() *stubRepo {
-	return &stubRepo{widgets: make(map[string]domain.Widget)}
+	return &stubRepo{examples: make(map[string]domain.Example)}
 }
 
-func (s *stubRepo) Create(_ context.Context, w domain.Widget) error {
+func (s *stubRepo) Create(_ context.Context, w domain.Example) error {
 	s.creates++
 
 	if s.err != nil {
 		return s.err
 	}
 
-	if _, ok := s.widgets[w.ID]; ok {
+	if _, ok := s.examples[w.ID]; ok {
 		return domain.ErrAlreadyExists
 	}
 
-	s.widgets[w.ID] = w
+	s.examples[w.ID] = w
 
 	return nil
 }
 
-func (s *stubRepo) Get(_ context.Context, id string) (domain.Widget, error) {
+func (s *stubRepo) Get(_ context.Context, id string) (domain.Example, error) {
 	if s.err != nil {
-		return domain.Widget{}, s.err
+		return domain.Example{}, s.err
 	}
 
-	w, ok := s.widgets[id]
+	w, ok := s.examples[id]
 	if !ok {
-		return domain.Widget{}, domain.ErrNotFound
+		return domain.Example{}, domain.ErrNotFound
 	}
 
 	return w, nil
 }
 
-func (s *stubRepo) List(context.Context) ([]domain.Widget, error) {
+func (s *stubRepo) List(context.Context) ([]domain.Example, error) {
 	if s.err != nil {
 		return nil, s.err
 	}
 
-	out := make([]domain.Widget, 0, len(s.widgets))
-	for _, w := range s.widgets {
+	out := make([]domain.Example, 0, len(s.examples))
+	for _, w := range s.examples {
 		out = append(out, w)
 	}
 
 	return out, nil
 }
 
-func (s *stubRepo) Update(_ context.Context, w domain.Widget) error {
+func (s *stubRepo) Update(_ context.Context, w domain.Example) error {
 	s.updates++
 
 	if s.err != nil {
 		return s.err
 	}
 
-	if _, ok := s.widgets[w.ID]; !ok {
+	if _, ok := s.examples[w.ID]; !ok {
 		return domain.ErrNotFound
 	}
 
-	s.widgets[w.ID] = w
+	s.examples[w.ID] = w
 
 	return nil
 }
@@ -85,11 +85,11 @@ func (s *stubRepo) Delete(_ context.Context, id string) error {
 		return s.err
 	}
 
-	if _, ok := s.widgets[id]; !ok {
+	if _, ok := s.examples[id]; !ok {
 		return domain.ErrNotFound
 	}
 
-	delete(s.widgets, id)
+	delete(s.examples, id)
 
 	return nil
 }
@@ -108,18 +108,18 @@ type fixedClock struct{ t time.Time }
 
 func (f fixedClock) Now() time.Time { return f.t }
 
-func newTestService(t *testing.T, repo domain.WidgetRepo) *domain.WidgetService {
+func newTestService(t *testing.T, repo domain.ExampleRepo) *domain.ExampleService {
 	t.Helper()
 
-	svc, err := domain.NewWidgetService(repo, &seqIDs{}, fixedClock{t: time.Unix(1700000000, 0)})
+	svc, err := domain.NewExampleService(repo, &seqIDs{}, fixedClock{t: time.Unix(1700000000, 0)})
 	if err != nil {
-		t.Fatalf("NewWidgetService() error = %v", err)
+		t.Fatalf("NewExampleService() error = %v", err)
 	}
 
 	return svc
 }
 
-func TestNewWidgetValidation(t *testing.T) {
+func TestNewExampleValidation(t *testing.T) {
 	t.Parallel()
 
 	now := time.Unix(1700000000, 0)
@@ -127,25 +127,25 @@ func TestNewWidgetValidation(t *testing.T) {
 	tests := []struct {
 		name     string
 		id       string
-		widget   string
+		input    string
 		quantity int
 		wantErr  bool
 	}{
-		{name: "valid", id: "w1", widget: "bolt", quantity: 3},
-		{name: "zero quantity is valid", id: "w1", widget: "bolt", quantity: 0},
-		{name: "empty id", id: "", widget: "bolt", quantity: 1, wantErr: true},
-		{name: "whitespace id", id: "   ", widget: "bolt", quantity: 1, wantErr: true},
-		{name: "empty name", id: "w1", widget: "", quantity: 1, wantErr: true},
-		{name: "name too long", id: "w1", widget: string(make([]byte, 65)), quantity: 1, wantErr: true},
-		{name: "negative quantity", id: "w1", widget: "bolt", quantity: -1, wantErr: true},
-		{name: "quantity over cap", id: "w1", widget: "bolt", quantity: 1_000_001, wantErr: true},
+		{name: "valid", id: "w1", input: "bolt", quantity: 3},
+		{name: "zero quantity is valid", id: "w1", input: "bolt", quantity: 0},
+		{name: "empty id", id: "", input: "bolt", quantity: 1, wantErr: true},
+		{name: "whitespace id", id: "   ", input: "bolt", quantity: 1, wantErr: true},
+		{name: "empty name", id: "w1", input: "", quantity: 1, wantErr: true},
+		{name: "name too long", id: "w1", input: string(make([]byte, 65)), quantity: 1, wantErr: true},
+		{name: "negative quantity", id: "w1", input: "bolt", quantity: -1, wantErr: true},
+		{name: "quantity over cap", id: "w1", input: "bolt", quantity: 1_000_001, wantErr: true},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			w, err := domain.NewWidget(tt.id, tt.widget, tt.quantity, now)
+			w, err := domain.NewExample(tt.id, tt.input, tt.quantity, now)
 
 			if tt.wantErr {
 				if !errors.Is(err, domain.ErrInvalid) {
@@ -156,7 +156,7 @@ func TestNewWidgetValidation(t *testing.T) {
 			}
 
 			if err != nil {
-				t.Fatalf("NewWidget() error = %v", err)
+				t.Fatalf("NewExample() error = %v", err)
 			}
 
 			if !w.CreatedAt.Equal(now.UTC()) {
@@ -166,12 +166,12 @@ func TestNewWidgetValidation(t *testing.T) {
 	}
 }
 
-func TestNewWidgetTrimsInput(t *testing.T) {
+func TestNewExampleTrimsInput(t *testing.T) {
 	t.Parallel()
 
-	w, err := domain.NewWidget("  w1  ", "  bolt  ", 1, time.Unix(0, 0))
+	w, err := domain.NewExample("  w1  ", "  bolt  ", 1, time.Unix(0, 0))
 	if err != nil {
-		t.Fatalf("NewWidget() error = %v", err)
+		t.Fatalf("NewExample() error = %v", err)
 	}
 
 	if w.ID != "w1" || w.Name != "bolt" {
@@ -182,9 +182,9 @@ func TestNewWidgetTrimsInput(t *testing.T) {
 func TestRestock(t *testing.T) {
 	t.Parallel()
 
-	w, err := domain.NewWidget("w1", "bolt", 5, time.Unix(0, 0))
+	w, err := domain.NewExample("w1", "bolt", 5, time.Unix(0, 0))
 	if err != nil {
-		t.Fatalf("NewWidget() error = %v", err)
+		t.Fatalf("NewExample() error = %v", err)
 	}
 
 	next, err := w.Restock(3)
@@ -211,18 +211,18 @@ func TestRestock(t *testing.T) {
 	}
 }
 
-func TestNewWidgetServiceRequiresPorts(t *testing.T) {
+func TestNewExampleServiceRequiresPorts(t *testing.T) {
 	t.Parallel()
 
-	if _, err := domain.NewWidgetService(nil, &seqIDs{}, nil); err == nil {
+	if _, err := domain.NewExampleService(nil, &seqIDs{}, nil); err == nil {
 		t.Error("a nil repo must be rejected")
 	}
 
-	if _, err := domain.NewWidgetService(newStubRepo(), nil, nil); err == nil {
+	if _, err := domain.NewExampleService(newStubRepo(), nil, nil); err == nil {
 		t.Error("a nil id generator must be rejected")
 	}
 
-	if _, err := domain.NewWidgetService(newStubRepo(), &seqIDs{}, nil); err != nil {
+	if _, err := domain.NewExampleService(newStubRepo(), &seqIDs{}, nil); err != nil {
 		t.Errorf("a nil clock must default to the wall clock: %v", err)
 	}
 }
@@ -242,8 +242,8 @@ func TestServiceCreate(t *testing.T) {
 		t.Errorf("ID = %q, want the generated id", w.ID)
 	}
 
-	if _, ok := repo.widgets["a"]; !ok {
-		t.Error("widget was not handed to the repo")
+	if _, ok := repo.examples["a"]; !ok {
+		t.Error("example was not handed to the repo")
 	}
 }
 

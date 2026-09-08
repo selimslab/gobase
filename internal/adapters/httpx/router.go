@@ -16,7 +16,7 @@ import (
 type Deps struct {
 	Logger   *slog.Logger
 	Policy   security.Policy
-	Widgets  *domain.WidgetService
+	Examples *domain.ExampleService
 	Ready    *Readiness
 	Version  string
 	Service  string
@@ -40,13 +40,13 @@ func NewRouter(deps Deps) http.Handler {
 	mux.HandleFunc("GET /healthz", handleLiveness(deps.Version))
 	mux.HandleFunc("GET /readyz", handleReadiness(deps.Ready))
 
-	if deps.Widgets != nil {
-		h := widgetHandler{svc: deps.Widgets}
-		mux.HandleFunc("POST /widgets", h.create)
-		mux.HandleFunc("GET /widgets", h.list)
-		mux.HandleFunc("GET /widgets/{id}", h.get)
-		mux.HandleFunc("POST /widgets/{id}/restock", h.restock)
-		mux.HandleFunc("DELETE /widgets/{id}", h.remove)
+	if deps.Examples != nil {
+		h := exampleHandler{svc: deps.Examples}
+		mux.HandleFunc("POST /examples", h.create)
+		mux.HandleFunc("GET /examples", h.list)
+		mux.HandleFunc("GET /examples/{id}", h.get)
+		mux.HandleFunc("POST /examples/{id}/restock", h.restock)
+		mux.HandleFunc("DELETE /examples/{id}", h.remove)
 	}
 
 	// A catch-all "/" would swallow ServeMux's own 405 handling, so the

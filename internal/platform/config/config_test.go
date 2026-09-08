@@ -43,7 +43,7 @@ func TestLoadDefaults(t *testing.T) {
 
 func TestLoadReadsEnvironment(t *testing.T) {
 	t.Setenv("APP_ENV", "production")
-	t.Setenv("SERVICE_NAME", "widgets")
+	t.Setenv("SERVICE_NAME", "billing")
 	t.Setenv("HTTP_ADDR", "127.0.0.1:9000")
 	t.Setenv("HTTP_READ_TIMEOUT", "3s")
 	t.Setenv("SECURITY_MAX_BODY_BYTES", "2048")
@@ -60,7 +60,7 @@ func TestLoadReadsEnvironment(t *testing.T) {
 		t.Errorf("Env = %q, want production", cfg.Env)
 	}
 
-	if cfg.ServiceName != "widgets" {
+	if cfg.ServiceName != "billing" {
 		t.Errorf("ServiceName = %q", cfg.ServiceName)
 	}
 

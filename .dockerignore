@@ -1,0 +1,35 @@
+# Keep the build context small and free of anything secret.
+.git
+.github
+.gitignore
+.dockerignore
+
+# Secrets and local configuration must never enter an image layer.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+
+# Build artefacts and caches
+bin/
+coverage.out
+*.test
+*.out
+
+# Tooling and docs the build does not need
+.golangci.yml
+lefthook.yml
+Makefile
+docs/
+scripts/
+README.md
+SECURITY.md
+LICENSE
+CHANGELOG.md
+.editorconfig
+.vscode/
+.idea/

@@ -1,0 +1,25 @@
+# Build output
+/bin/
+/dist/
+*.exe
+
+# Test and coverage
+coverage.out
+*.test
+*.prof
+*.pprof
+
+# Secrets and local configuration. .env.example is committed; .env is not.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Editors and OS
+.DS_Store
+.vscode/
+.idea/
+*.swp

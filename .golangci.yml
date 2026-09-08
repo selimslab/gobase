@@ -1,0 +1,190 @@
+# golangci-lint v2 configuration.
+# Run `make lint` locally; CI runs the same config.
+version: "2"
+
+run:
+  timeout: 5m
+  tests: true
+
+linters:
+  default: none
+  enable:
+    # Correctness
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    # Style and clarity
+    - revive
+    - godot
+    - gocritic
+    - goconst
+    - misspell
+    - predeclared
+    - unconvert
+    - unparam
+    - whitespace
+    - nakedret
+    # Errors
+    - errname
+    - errorlint
+    - nilerr
+    - nilnesserr
+    - wastedassign
+    # Concurrency and context
+    - contextcheck
+    - fatcontext
+    - copyloopvar
+    - noctx
+    # Security
+    - gosec
+    - bodyclose
+    - rowserrcheck
+    - sqlclosecheck
+    # Correctness of specific APIs
+    - durationcheck
+    - exhaustive
+    - gocheckcompilerdirectives
+    - gochecksumtype
+    - iface
+    - intrange
+    - loggercheck
+    - makezero
+    - mirror
+    - musttag
+    - perfsprint
+    - prealloc
+    - reassign
+    - sloglint
+    - testifylint
+    - thelper
+    - tparallel
+    - usestdlibvars
+    - usetesting
+    # Architecture
+    - depguard
+
+  settings:
+    errcheck:
+      # An ignored type assertion is a panic waiting to happen.
+      check-type-assertions: true
+
+    govet:
+      enable-all: true
+      disable:
+        # Field alignment optimizes memory at the cost of grouping fields by
+        # meaning. Readability wins in a template.
+        - fieldalignment
+
+    revive:
+      rules:
+        - name: exported
+        - name: error-strings
+        - name: error-return
+        - name: unused-parameter
+        - name: context-as-argument
+        - name: indent-error-flow
+        - name: var-declaration
+        - name: early-return
+
+    gosec:
+      excludes:
+        # Handled by errcheck, which reports it more precisely.
+        - G104
+
+    sloglint:
+      # slog.String("k", v), never slog.Any with a bare map.
+      kv-only: false
+      attr-only: true
+      # A static message makes a log line greppable and groupable.
+      static-msg: true
+      no-raw-keys: false
+      context: scope
+
+    goconst:
+      min-occurrences: 3
+      min-len: 3
+
+    exhaustive:
+      default-signifies-exhaustive: true
+
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - style
+        - performance
+      disabled-checks:
+        - hugeParam
+        - rangeValCopy
+
+    # The architecture rules. Layers are directories, so a new package under a
+    # layer inherits its rule automatically.
+    depguard:
+      rules:
+        # platform/ is machinery with no business meaning and no transport.
+        platform:
+          list-mode: lax
+          files:
+            - "**/internal/platform/**"
+          deny:
+            - pkg: "net/http"
+              desc: "platform must stay transport-agnostic; put HTTP in internal/adapters/httpx"
+            - pkg: "github.com/selimslab/gobase/internal/domain"
+              desc: "platform must not know about the domain; the dependency points inward"
+            - pkg: "github.com/selimslab/gobase/internal/adapters"
+              desc: "platform must not know about adapters; the dependency points inward"
+
+        # domain/ is pure: entities, rules, and the ports they declare.
+        domain:
+          list-mode: lax
+          files:
+            - "**/internal/domain/**"
+          deny:
+            - pkg: "net/http"
+              desc: "the domain must stay transport-agnostic; put HTTP in internal/adapters/httpx"
+            - pkg: "database/sql"
+              desc: "the domain must not know about storage; declare a port in ports.go instead"
+            - pkg: "github.com/selimslab/gobase/internal/adapters"
+              desc: "the domain must not import an adapter; adapters implement domain ports, not the reverse"
+
+    misspell:
+      locale: US
+
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - std-error-handling
+    rules:
+      # Test code trades some rigour for readability.
+      - path: _test\.go
+        linters:
+          - gosec
+          - errcheck
+          - noctx
+          - dupl
+          - unparam
+          - goconst
+          - contextcheck
+
+      # The composition root wires everything; that is its job.
+      - path: cmd/server/main\.go
+        linters:
+          - gocritic
+
+formatters:
+  enable:
+    - gofumpt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/selimslab/gobase
+    gofumpt:
+      extra:
+        group-params: true
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

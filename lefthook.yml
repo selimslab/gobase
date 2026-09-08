@@ -1,0 +1,41 @@
+# Git hooks. Install with `make hooks`.
+#
+# The split is deliberate: pre-commit runs only what is fast enough that you
+# do not learn to skip it, and pre-push runs the slow checks that must not
+# reach the remote. A hook you bypass with --no-verify protects nothing.
+
+pre-commit:
+  parallel: true
+  commands:
+    fmt:
+      glob: "*.go"
+      run: gofumpt -w {staged_files}
+      stage_fixed: true
+
+    lint:
+      glob: "*.go"
+      # --new-from-rev keeps this to the code you are actually committing, so
+      # a legacy issue elsewhere does not block an unrelated change.
+      run: golangci-lint run --new-from-rev=HEAD --fix
+      stage_fixed: true
+
+    tidy:
+      glob: "go.{mod,sum}"
+      run: go mod tidy && git add go.mod go.sum
+
+    secrets:
+      # A committed secret is a rotated secret; catching it here is the only
+      # cheap moment.
+      run: gitleaks git --staged --redact --no-banner
+
+pre-push:
+  parallel: true
+  commands:
+    test:
+      run: go test -race ./...
+
+    vuln:
+      run: govulncheck ./...
+
+    layers:
+      run: ./scripts/check-layers.sh
